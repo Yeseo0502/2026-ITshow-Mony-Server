@@ -1,0 +1,17 @@
+{
+  "name": "mony-backend",
+  "version": "1.0.0",
+  "description": "Mony Backend Server with Express and Supabase",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "@supabase/supabase-js": "^2.26.0"
+  }
+}
