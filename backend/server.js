@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
-import { specs } from './swagger.js';  // 추가
+import { specs } from './swagger.js';
 import accountRoutes from './routes/accounts.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
@@ -11,44 +11,50 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(requestLogger);
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
 // Health Check
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: '✅ Backend is running!',
-        timestamp: new Date().toISOString()
-    });
+  res.json({ 
+    status: '✅ Backend is running!',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// ⭐ Swagger UI 추가
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-// Routes
 app.use('/api/accounts', accountRoutes);
 
-// 404 Handler
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: `Route ${req.method} ${req.path} not found`
-    });
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.path} not found`
+  });
 });
 
-// Error Handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`
+  console.log(`
 ╔════════════════════════════════════════╗
 ║     🚀 Mony Backend Server Started     ║
 ╚════════════════════════════════════════╝
@@ -68,6 +74,6 @@ app.listen(PORT, () => {
 });
 
 process.on('SIGINT', () => {
-    console.log('\n🛑 Server shutting down...');
-    process.exit(0);
+  console.log('\n🛑 Server shutting down...');
+  process.exit(0);
 });
